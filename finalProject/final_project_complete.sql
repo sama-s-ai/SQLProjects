@@ -87,5 +87,34 @@ GROUP BY 1, 2
 ORDER BY 1, 2;
 
 
+/*
+5. We’ve come a long way since the days of selling a single product. Let’s pull monthly trending for revenue 
+and margin by product, along with total sales and revenue. Note anything you notice about seasonality.
+*/
+
+SELECT
+
+	YEAR(created_at) as yr,
+    MONTH(created_at) as mo,
+	SUM(CASE WHEN product_id = 1 THEN price_usd ELSE NULL END) AS original_mrfuzzy_rev,
+    SUM(CASE WHEN product_id = 1 THEN price_usd - cogs_usd ELSE NULL END) AS original_mrfuzzy_marg,
+    
+    SUM(CASE WHEN product_id = 2 THEN price_usd ELSE NULL END) AS forever_lovebear_rev,
+    SUM(CASE WHEN product_id = 2 THEN price_usd - cogs_usd ELSE NULL END) AS forever_lovebear_marg,
+    
+    SUM(CASE WHEN product_id = 3 THEN price_usd ELSE NULL END) AS birthday_sugar_rev,
+    SUM(CASE WHEN product_id = 3 THEN price_usd - cogs_usd ELSE NULL END) AS birthday_sugar_marg,
+    
+    SUM(CASE WHEN product_id = 4 THEN price_usd ELSE NULL END) AS hudson_river_rev,
+    SUM(CASE WHEN product_id = 4 THEN price_usd - cogs_usd ELSE NULL END) AS hudson_river_marg,
+    
+    SUM(price_usd) as total_revenue,
+    SUM(price_usd - cogs_usd) as total_margin
+    
+FROM order_items
+
+GROUP BY 1,2
+ORDER BY 1,2;
+
 
 
