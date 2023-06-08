@@ -116,5 +116,41 @@ FROM order_items
 GROUP BY 1,2
 ORDER BY 1,2;
 
+/*
+6. Let’s dive deeper into the impact of introducing new products. Please pull monthly sessions to 
+the /products page, and show how the % of those sessions clicking through another page has changed 
+over time, along with a view of how conversion from /products to placing an order has improved.
+*/
+
+-- IDENTIFY all views of the products page, and bring in date
+
+CREATE TEMPORARY TABLE product_pageviews
+
+SELECT
+	website_session_id,
+    website_pageview_id,
+    created_at AS saw_product_page_at
+    
+FROM website_pageviews
+WHERE pageview_url = '/products';
+
+SELECT
+	YEAR(saw_product_page_at) as yr,
+    MONTH(saw_product_page_at) as mo,
+	COUNT(DISTINCT product_pageviews.website_session_id) AS sessions_to_product_page,
+    COUNT(DISTINCT website_pageviews.website_session_id) AS clicked_to_next_page,
+    COUNT(DISTINCT website_pageviews.website_session_id) / COUNT(DISTINCT product_pageviews.website_session_id) as clickthrough_rt,
+    COUNT(DISTINCT orders.order_id) as orders,
+    COUNT(DISTINCT orders.order_id) / COUNT(DISTINCT product_pageviews.website_session_id) as products_to_order_rt
+
+FROM product_pageviews
+	LEFT JOIN website_pageviews
+		ON website_pageviews.website_session_id = product_pageviews.website_session_id
+		AND website_pageviews.website_pageview_id > product_pageviews.website_pageview_id -- to make sure you only see the pageviews AFTER the products page, i.e. greater than.
+
+	LEFT JOIN orders
+		ON orders.website_session_id = website_pageviews.website_session_id
+
+GROUP BY 1,2;
 
 
