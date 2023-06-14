@@ -153,4 +153,39 @@ FROM product_pageviews
 
 GROUP BY 1,2;
 
+/* We made our 4th product available on Dec. 05, 2014 (it was previously only a cross sell item). Please pull sales data since then, and show how well each product cross-sells from one another */
 
+-- Create temp table to match dates
+
+CREATE TEMPORARY TABLE primary_products
+SELECT
+	order_id,
+	primary_product_id,
+	created_at AS ordered_at
+FROM orders
+WHERE created_at > '2014-12-05' -- when the 4th product was added
+
+-- Then create a sub query to bring in only cross sells, and select data from that
+
+SELECT
+	primary_product_id,
+	COUNT(DISTINCT order_id) AS total_orders,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 1 THEN order_id ELSE NULL END) AS _xsold_p1,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 2 THEN order_id ELSE NULL END) AS _xsold_p2,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 3 THEN order_id ELSE NULL END) AS _xsold_p3,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 4 THEN order_id ELSE NULL END) AS _xsold_p4,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 1 THEN order_id ELSE NULL END) / COUNT(DISTINCT order_id) as p1_xsell_rt,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 2 THEN order_id ELSE NULL END) / COUNT(DISTINCT order_id) as p2_xsell_rt,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 3 THEN order_id ELSE NULL END) / COUNT(DISTINCT order_id) as p3_xsell_rt,
+	COUNT(DISTINCT CASE WHEN cross_sell_product_id = 4 THEN order_id ELSE NULL END) / COUNT(DISTINCT order_id) as p4_xsell_rt
+FROM (
+SELECT 
+	primary_products.*,
+	order_items.product_id AS cross_sell_product_id
+FROM primary_products
+	LEFT JOIN order_items
+		ON order_items.order_id = primary_products.order_id
+		AND order_items.is_primary_item = 0
+) AS primary_w_cross_sell
+
+GROUP BY 1
